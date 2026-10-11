@@ -1,0 +1,286 @@
+# The `router-planner` 智能规划模式 preset: smart routing × dsh-plans
+# planning workflow.
+#
+# 融合 = dsh-plans（规划模式）的组合为底座 + 智能路由叠加：
+#   - dsh-plans 规划工作流原样保留：planning-first persona、五个规划技能
+#     （create-a-small-plan / create-a-plan / create-a-big-plan /
+#     diagnose-before-plan / reference-before-plan）、`dsh-plans/` 下的
+#     Markdown 计划工件（PLAN_vN.md / DECISIONS.md / run ledgers）、
+#     reviewer/criticizer 子代理轮（run_plan_subagent）、显式交接后以
+#     DSH goal 执行（ponytail + MVP 最小测试）；内置 plan mode 保持禁用
+#     （工件规划替代它）。
+#   - 智能路由叠加：首条用户消息自动分类（react 构建带 / spec 修复带 /
+#     weak 内路由），每条真实用户消息后注入对应行为带的规划向近距离引导
+#     （深度自适应），首轮按带裁剪工具面（行为带核心 ∪ skill +
+#     ask_user_question），首次持久 tool/call 后放开完整目录。
+#   - 路由**不替换 persona**：dsh-plans 的规划纪律由 persona 驱动，实测
+#     一句话换人设即可翻转轨迹，替换会毁掉工作流。路由只引导、只裁剪。
+#
+# This file is an AGENT-PLANE composition mounted by the roster exactly like
+# `standard`. The plane and realm rules from that file apply unchanged.
+#
+# ── 本机兼容补丁（2026-09 安装时针对 DSH 0.1.5-rc.2 修正）───────────────────
+#   1. persona 行：配置字段 `text` 已废弃，改为 `prefix`（内容原样保留）。
+#   2. router-planner-core.mjs / router-planner-bootstrap.mjs：当前 `Session`
+#      只暴露 `seq` / `eventAt()`，不再有 `events` 数组；旧代码在每次
+#      system-prompt assembly 上读 `session.events` 会抛 TypeError，导致会话
+#      连一轮都跑不起来。现改为版本兼容的日志读取 + 增量扫描。
+#   3. router-planner-bootstrap.mjs：`firstUserText` 误把原始文本当 mode 用，
+#      使首条消息之后所有 assembly 都退化成 spec 带；现改存分类结果。
+#   4. 首条用户消息到达时还没有任何 assembly，guide 注入因此拿不到 agent；
+#      现补一条宿主 `agents` 注册表查询。
+# 验证：node scripts/selftest.mjs（38 项检查）。
+
+# ── identity ────────────────────────────────────────────────────────────────
+
+# 融合 persona：dsh-plans 规划纪律 + 智能路由感知。
+# `{{model}}` 与 `{{cwd}}` 从 agent 自身路由与工作区解析。
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    prefix: |-
+      You are a planning-first coding agent powered by the {{model}} model, running on the DeepSeek Harness. Your working directory is {{cwd}}.
+
+      This session is composed from the 智能规划模式 preset, which merges the dsh-plans planning workflow with task-aware smart routing: your first message is classified into a behavior band (build → lean-plan hands-on style; fix/maintenance → inspect-and-plan style; ambiguous → you self-classify), and a Router guidance message follows each of your messages with the matching style directive. The planning workflow always applies: repository changes are researched, written as traceable Markdown plans under `dsh-plans/`, refined through reviewer/criticizer subagent rounds with the user in the loop, and only then implemented as a DSH goal.
+
+      When the user asks for a repository change (or a diagnosis/reference study before one), select the matching bundled skill from the skill catalog — create-a-small-plan, create-a-plan, create-a-big-plan, diagnose-before-plan, or reference-before-plan — load it with the `skill` tool, and follow it exactly, including its shared normative references. The workflow, not your judgment of convenience, decides the order of questions, artifacts, and handoffs.
+
+      Core discipline:
+      - Per workspace, confirm the language setting first; confirm each role's model at that role's first use. Reviewer and criticizer subagents run with the `run_plan_subagent` tool, passing the persisted model.
+      - Ask one user question at a time through ask_user_question, in the standard choice format; record every decision in `DECISIONS.md` and the run ledgers.
+      - Never spawn a reviewer or criticizer without the refinement mode question; after every PLAN version ask the refinement question, and after refinement converges ask the execution handoff question: execute the plan now as a DSH goal, or stop after planning.
+      - Before that handoff answer arrives, write only `dsh-plans/` state and artifacts — never target source, configs, or tests. `Auto-complete` never approves goal execution, installs, deploys, merges, pushes, or destructive cleanup.
+      - After approval, drive implementation with create_goal and the plan's Verifier Checklist, using todo_write, ponytail discipline, and the MVP minimum test set; call update_goal complete only when every checklist box passes.
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+# 智能路由行（planner 模式）。不发布服务，无需 realm；需要 systemPrompt /
+# tools / llm（宿主或 preset 其他行提供）。放在这里（组外）与 dsh-plans
+# 的 plan-subagents 行并列，二者都只往 tools 注册工具。
+- id: router-bootstrap
+  name: ./router-planner-bootstrap.mjs
+  config:
+    routerMode: planner
+
+# ── shell ───────────────────────────────────────────────────────────────────
+
+# `shell-env` stays in the HOST composition; both shell tools consume the host
+# registry from here. See `standard` for the full reasoning.
+- id: tool-bash
+  name: '@deepseek-ai/dsh-tool-bash'
+  disabled: !!js process.platform === 'win32'
+
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: !!js process.platform !== 'win32'
+
+# ── filesystem ──────────────────────────────────────────────────────────────
+
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+# `router-planner-core.mjs` 的 weak 带核心是 `['str_replace_editor']`（RL 形状：
+# shell + editor）。原组合漏了这一行，于是每条消息的**首个** assembly（它发生
+# 在用户消息落盘之前，因此总是 weak 带）只会剩下 skill/ask_user_question/pwsh。
+# 补上这一行，weak 带才拿到它自己声明的编辑器。
+- id: tool-str-replace-editor
+  name: '@deepseek-ai/dsh-tool-str-replace-editor'
+
+# ── background jobs ────────────────────────────────────────────────────────
+
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+
+# ── skills ──────────────────────────────────────────────────────────────────
+
+# 技能注册表在宿主组合，按 scope 分层；这些行注册进本 preset 的层，无需
+# realm。`customSkillDirs` 指向本 preset 自带的 skills/（dsh-plans 的五个
+# 规划技能）。`baseUrl` 是本组合文件所在目录，预设装到哪都正确解析。
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+  config:
+    customSkillDirs:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+# ── goals ───────────────────────────────────────────────────────────────────
+
+# 只有模型侧工具；goal SERVICE 与 session driver 留在宿主侧。
+# dsh-plans 通过该工具驱动执行阶段。
+- id: tool-goal
+  name: '@deepseek-ai/dsh-tool-goal'
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+
+# 内置 plan mode 保持禁用：单计划、禁写循环与工件规划冲突——dsh-plans
+# 在规划阶段写 `PLAN_vN.md` 工件并以自己的交接问题替代 exit_plan_mode。
+- id: planning
+  name: cordis:group
+  group: true
+  disabled: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+
+# ── compaction ──────────────────────────────────────────────────────────────
+
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    # ml-planner (I-013): 压缩参数显式化 —— thresholdRatio 0.8 与 retainRatio 0.25。
+    # 0.8 是 dsh-compaction-basic 的默认值（lib/index.js:15 DEFAULT_THRESHOLD_RATIO=.8），
+    # 显式化不改变行为，只把「70% 外部化 / 80% 原生压缩」这组冻结参数写进组装文件。
+    # retainRatio 0.25 < thresholdRatio 0.8 ⇒ 通过构造期的 validateRatioRetention
+    # （lib/index.js:134-136），已用真实模块构造验证过。
+    # modelPolicies 按 exact provider+model 匹配；本会话模型来自 settings.yaml 的
+    # agent-default-model。目的：把 1e6 窗口下的 800k/250k 预算钉死，避免以后改了
+    # 默认模型后静默落到全局默认。
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+      config:
+        # compaction-max-tokens (PLAN_v2 / I-004 改判): 与 fem-ml-planner 同一缺陷。
+        # 本块结构与 fem-ml-planner 逐行相同（显式 config 有 thresholdRatio/retainRatio/
+        # modelPolicies，唯独没有 maxTokens ⇒ 落默认 8192），长跨度 /compact 会同样被截断。
+        maxTokens: 32768
+        thresholdRatio: 0.8
+        retainRatio: 0.25
+        modelPolicies:
+          - provider: deepseek-official
+            model: deepseek-v4-flash-vision-exp
+            thresholdRatio: 0.8
+            retainRatio: 0.25
+
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── delegation and workflows ────────────────────────────────────────────────
+
+- id: delegation
+  name: cordis:group
+  group: true
+  isolate:
+    workflowEngine: true
+  config:
+    - id: tool-subagent-control
+      name: '@deepseek-ai/dsh-tool-subagent-control'
+
+    - id: tool-subagent-list-agents
+      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+
+    - id: tool-subagent
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent
+        backgroundMode: continuable
+
+    - id: tool-subagent-fork
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: fork
+        toolName: subagent_fork
+        backgroundMode: continuable
+
+    - id: tool-subagent-codex
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: codex
+        toolName: subagent_codex
+        enableRunInBackground: false
+        maxDepth: provider-managed
+
+    - id: tool-subagent-claude-code
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: claude-code
+        toolName: subagent_claude_code
+        enableRunInBackground: false
+        maxDepth: provider-managed
+
+    - id: workflow-worker-thread
+      name: '@deepseek-ai/dsh-workflow-worker-thread'
+      config:
+        provider: spawn
+
+    - id: tool-workflow
+      name: '@deepseek-ai/dsh-tool-workflow'
+
+    - id: tool-ralph
+      name: '@deepseek-ai/dsh-tool-ralph'
+      config:
+        subagentProvider: spawn
+        maxRounds: 64
+
+# ── dsh-plans role subagents ───────────────────────────────────────────────
+
+# 本组合文件相对路径的本地模块（loader 按 preset 目录解析 `./`）。不提供
+# 服务，只向本 preset 层注册一个工具，消费宿主 `subagents` 注册表——
+# 无需 isolate realm。
+#
+# `config.deny` 是子代理的只读过滤器：reviewer/criticizer 子代理禁用的
+# 每个工具名。只列本 preset 目录里存在的工具名——`tools.restrict` 拒绝
+# 未知名称，delegation 组下面禁用的产品提供者行不在目录里。
+- id: plan-subagents-tool
+  name: ./lib/plan-subagents.js
+  config:
+    toolName: run_plan_subagent
+    provider: spawn
+    deny:
+      - write
+      - edit
+      - todo_write
+      - create_goal
+      - get_goal
+      - update_goal
+      - ask_user_question
+      - run_plan_subagent
+      - subagent
+      - subagent_fork
+      - send_message
+      - interrupt_agent
+      - list_agents
+      - workflow
+      - ralph
+
+# ── remaining model-facing rows ─────────────────────────────────────────────
+
+- id: tool-ask-user
+  name: '@deepseek-ai/dsh-tool-ask-user'
+
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+
+# The `web` service and its search provider stay in the host composition; only
+# the model-facing tool is per-session.
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: false
+    searchTimeoutMs: 60000

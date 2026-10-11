@@ -1,0 +1,26 @@
+{
+  "_comment": "I-015 ml-band-cases.json. Positives are REAL article titles from the 258-article corpus plus realistic ML asks; negatives are the three traps the plan mandates plus realistic non-ML engineering phrasing. Read by scripts/selftest.mjs and by the keyword validator.",
+  "_results_measured_2026_09_22": { "negatives_pass": "7/7 = 100%", "positives_pass": "10/10 = 100%", "false_trigger_rate": "0.0%", "recall": "100%", "trap_checks": "shape/reshape/modeling/classify all non-matching" },
+  "guard": { "requireTerms": 1 },
+  "positive": [
+    { "text": "帮我用随机森林做销量预测，先别写训练代码", "source": "typical request", "expect": "ml" },
+    { "text": "训练集 R²=0.99，你是不是觉得模型很好？", "source": "corpus article title", "expect": "ml" },
+    { "text": "标签差 10 个数量级，你还只报一个 R²", "source": "corpus article title", "expect": "ml" },
+    { "text": "交叉熵、梯度和过拟合要搞懂", "source": "corpus article title", "expect": "ml" },
+    { "text": "Transformer 准确率 90%，为啥还要标签平滑", "source": "corpus article title", "expect": "ml" },
+    { "text": "SHAP 排第一你就敢留下？", "source": "corpus article title", "expect": "ml" },
+    { "text": "模型加入更多特征后，为什么测试效果反而下降", "source": "corpus article title", "expect": "ml" },
+    { "text": "KNN 都没训练，凭什么会过拟合", "source": "corpus article title", "expect": "ml" },
+    { "text": "tune the learning rate and batch size before adding dropout", "source": "typical request", "expect": "ml" },
+    { "text": "cross-validation shows overfitting on the validation set", "source": "typical request", "expect": "ml" }
+  ],
+  "negative": [
+    { "text": "add a feature flag to the model router", "reason": "plan-mandated trap: feature+model are ambiguous only", "expect": "not-ml" },
+    { "text": "the shape of the frame is optimized for load bearing", "reason": "plan-mandated trap: shap substring bomb", "expect": "not-ml" },
+    { "text": "修复回归测试报错，再跑一遍回归测试", "reason": "plan-mandated trap: Chinese 回归 in regression-testing sense", "expect": "not-ml" },
+    { "text": "rename the model class in the ORM layer", "reason": "ambiguous-only: model", "expect": "not-ml" },
+    { "text": "the pipeline buffers embeddings before attention", "reason": "ambiguous-only: pipeline+embedding+attention", "expect": "not-ml" },
+    { "text": "reshape the tensor for the display model", "reason": "ambiguous-only: shap-in-reshape+model", "expect": "not-ml" },
+    { "text": "update the loss field in the config schema", "reason": "ambiguous-only: loss", "expect": "not-ml" }
+  ]
+}

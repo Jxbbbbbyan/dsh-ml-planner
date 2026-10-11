@@ -1,0 +1,2 @@
+name: 机器学习规划模式 (ML Planner)
+description: 在「智能规划模式」全部内容之上叠加机器学习能力——新增按 ML 关键词强制的逐条消息注入（要求先产出 ML_BRIEF 再写训练代码）、1 个入口技能 ml-modeling-plan 与 references 知识库（模型族×问题对策矩阵、可解释性、欠/过拟合逐族旋钮）、context-handoff 防腐化交接技能、预设完整性哈希清单；完整保留 dsh-plans 规划工作流（5 个规划技能、PLAN 工件、reviewer/criticizer 评审轮、显式交接后以 goal 执行）与智能路由三带引导。

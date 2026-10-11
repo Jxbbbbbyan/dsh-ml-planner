@@ -1,0 +1,23 @@
+# dsh-ml-planner — line-ending discipline
+#
+# 1) Repo-authored files (README, docs/, scripts/, CHANGELOG …) are normalized to
+#    LF in the index and checked out as LF, so a Windows checkout cannot pollute
+#    the repository with CRLF.
+* text=auto eol=lf
+
+# 2) preset/ ships the preset BYTES VERBATIM. Those bytes are hash-verified by
+#    preset/scripts/verify_integrity.py against the manifest at
+#    preset/skills/ml-modeling-plan/references/preset-integrity-manifest.md, so
+#    git must never rewrite line endings there. Five of the shipped preset files
+#    are CRLF upstream; `-text` keeps all of them byte-identical.
+preset/** -text
+
+# 3) Binary assets (docs screenshots and similar) must never be diffed or
+#    line-ending-converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf  binary
+*.zip  binary

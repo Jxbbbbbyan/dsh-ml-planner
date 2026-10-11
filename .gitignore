@@ -1,0 +1,40 @@
+# ── DSH runtime state — never versioned ─────────────────────────────────────
+# dsh-plans writes PLAN_vN.md / DECISIONS.md / event.log / .state/ into the
+# *target* repository at run time; none of that belongs in this repository.
+.state/
+**/.state/
+dsh-plans/.state/
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ── Node ────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Logs, scratch, local-only experiments ───────────────────────────────────
+*.log
+*.tmp
+tmp/
+scratch/
+_local/
+
+# ── Editors / OS ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Deliberately unpublished upstream skills ────────────────────────────────
+# The three non-ML skills from the upstream preset (chatgpt-sidebar-bridge,
+# chatgpt-sidebar-delivery, gui-input-hard-rules) are NOT part of this
+# repository. If you keep a local copy for your own use, this is where to drop
+# it so it can never be committed by accident.
+ignored-skills/
