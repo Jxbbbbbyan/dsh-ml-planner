@@ -46,7 +46,7 @@ First published release. / 首次发布。
 
 ### Changed
 
-- **`preset/scripts/verify_integrity.py`** — one of the two preset files that deliberately differ
+- **`preset/scripts/verify_integrity.py`** — one of the three preset files that deliberately differ
   from the upstream original, in three ways, all of them required for the repository to be usable
   after a fresh clone:
   1. the two hard-coded personal absolute paths (`--preset`, `--source` defaults) were replaced by
@@ -112,8 +112,10 @@ Measured on the release commit, all from a fresh `git clone` into a temporary di
 - Manifest fingerprint: `e17fc1907bc75db7e7992459afab4c67cec832f6fcf065c107f03917fa79db22`
   (recomputed from the manifest's own rows; this is a snapshot for v0.1.0, the manifest stays the
   single source of truth).
-- `preset/` is byte-identical to the upstream preset for **34 of its 36 files**; the two
-  deliberate exceptions are both listed under **Changed** above.
+- `preset/` is byte-identical to the upstream preset for **33 of its 36 files**. All three
+  deliberate exceptions are listed under **Changed** above: two content changes
+  (`verify_integrity.py`, `ml-pipeline-and-invocation.md`) and the integrity manifest, which only
+  records the second one.
 - No npm dependencies: the preset ships no `package.json`, so the Node modules run on a bare
   Node.js install. Python side is standard library only (`validate_preset.py` additionally uses
   `PyYAML` when present and skips the composition check when it is not).
