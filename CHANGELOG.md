@@ -6,6 +6,26 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **README §4.0 — "What you are actually downloading"** · README 新增置顶小节，说明本仓库的主要资产是
+  `preset/skills/` 下的 **24 个知识文件**（7 `SKILL.md` + 17 `references/*.md`，418,546 B，占 `preset/`
+  的 77.6 %），而不是代码；并给出两条可自行复算的命令（工作区 `stat` 版与 git 对象版）。此前 README 只在
+  §4.2 的清单表里间接给出这些数字，从未做出这层定位陈述。
+
+### Fixed
+
+- **过期字节数校正** — `preset/` 的总大小此前写作 534,561 B（`docs/FILE-INDEX.md` 三处、`README.md` §4.8
+  一处，共四处）；由 `git ls-tree -r HEAD --long preset/` 确认为 **539,315 B**，即在本次改动之前就已过期
+  4,754 B。`README.md` 与 `CHANGELOG.md` 两处条目的字节数亦按本次改动的实测值同步校正。
+
+### Note
+
+- `preset/` 下 **没有任何文件被改动**，因此 `preset-integrity-manifest.md` 无需更新，
+  `verify.ps1 -Preset` 的完整性校验不受影响。
+
 ## [0.1.0] - 2026-10-12
 
 First published release. / 首次发布。

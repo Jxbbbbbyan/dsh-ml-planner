@@ -19,6 +19,84 @@ training code exists.** Around that contract sit **94 discipline rules**, **17 r
 
 ---
 
+## §4.0 What you are actually downloading · 你下载的到底是什么
+
+> **The valuable part of this repository is not the code. It is the 24 knowledge files under `preset/skills/`.**
+> **这个仓库真正值钱的不是代码，是 `preset/skills/` 底下的 24 个知识文件。**
+
+Most repositories in this space ship a script and a hope. Here the code is a thin router: its job is to decide
+*which* knowledge document to load, and *what must be written down before anything is trained.*
+
+**A knowledge file** means one Markdown file under `preset/skills/` — **7** `SKILL.md` (the routers) plus
+**17** `references/*.md` (the knowledge they route to): **24 files**, and those are what you are downloading.
+
+| Layer | Path | Files | Bytes | Share of `preset/` |
+|---|---|---:|---:|---:|
+| **Knowledge** — 7 `SKILL.md` + 17 references | `preset/skills/**` | **24** | **418,546** | **77.6 %** |
+| Non-knowledge — router, verifier, routing data, preset README | `preset/` minus `skills/` | 12 | 120,769 | 22.4 % |
+| | **`preset/` total** | **36** | **539,315** | 100 % |
+
+The exact split depends on where you draw the line, and every version of it points the same way. Count the
+routing keyword data as knowledge too (`preset/lib/ml-keywords.json`, 10,349 B) and it becomes **25 files /
+428,895 B / 79.5 %**; narrow the denominator to program code (`.mjs` / `.js` / `.py` — 7 files, 87,809 B) and
+the knowledge layer is **4.8×** larger. Even if you count *every* non-knowledge file as "code" — including the
+keyword data and the preset's own README — it is still **3.5× larger**.
+
+The sharpest single number:
+
+> `ml-discipline-rules.md` — one file, **193,510 B**, 94 rules — is **2.2× larger than all the program code in
+> this repository combined**, and larger than all 12 non-knowledge files in `preset/` put together.
+
+<details>
+<summary><b>All 24 knowledge files, by size</b></summary>
+
+| File (under `preset/skills/`) | Bytes | What it gives you |
+|---|---:|---|
+| `ml-modeling-plan/references/ml-discipline-rules.md` | 193,510 | 94 rules, P0–P10 by pipeline stage, 85 MUST + 9 SHOULD |
+| `ml-modeling-plan/references/ml-pipeline-and-invocation.md` | 60,190 | the S0→S10 stage table, gates, who calls whom |
+| `ml-modeling-plan/references/preset-integrity-manifest.md` | 18,889 | what every preset file is, and how integrity is checked |
+| `ml-modeling-plan/references/ml-model-failure-modes.md` | 17,408 | 8 model families, each with its observed failure modes |
+| `references/dsh-planning-workflow.md` | 15,508 | the planning discipline the six planning skills share |
+| `ml-modeling-plan/references/ml-evaluation-and-leakage.md` | 12,945 | metrics, thresholds, calibration, leakage patterns |
+| `ml-modeling-plan/references/ml-spatial-and-field-inputs.md` | 10,962 | direction fields, rasterisation loss, circular statistics |
+| `ml-modeling-plan/references/ml-overfit-underfit.md` | 10,396 | diagnose before you regularise; §6 leakage impersonating overfitting |
+| `ml-modeling-plan/references/ml-interpretability.md` | 9,281 | method families and how they fail; wording rules |
+| `ml-modeling-plan/references/ml-algorithm-families.md` | 7,998 | architectures with an outer optimisation loop |
+| `references/state-and-config.md` | 7,783 | language, role, and executor settings; state layout |
+| `ml-modeling-plan/references/ml-literature-gaps.md` | 7,582 | 12 documented gaps — what the literature does *not* support |
+| `ml-modeling-plan/SKILL.md` | 6,730 | the entry skill: which reference to load, what must be written first |
+| `context-handoff/SKILL.md` | 5,887 | the ten-section handoff that survives context loss |
+| `ml-modeling-plan/references/ml-keywords.md` | 4,642 | the trigger words and the ambiguous ones |
+| `ml-modeling-plan/references/ml-time-series.md` | 4,609 | splitting, stationarity, where the leakage happens |
+| `ml-modeling-plan/references/ml-feature-engineering.md` | 4,609 | fitting order — the rule that prevents the most common leak |
+| `ml-modeling-plan/references/ml-algorithm-selection.md` | 4,357 | choosing a model before tuning one |
+| `reference-before-plan/SKILL.md` | 3,313 | finding and verifying external references first |
+| `diagnose-before-plan/SKILL.md` | 3,067 | root-cause discipline before planning a fix |
+| `references/plan-artifact-template.md` | 2,470 | the required shape of a reviewable plan |
+| `create-a-big-plan/SKILL.md` | 2,433 | 10+ questions, three independent reviewers |
+| `create-a-plan/SKILL.md` | 2,153 | 5–10 questions, reviewer then criticizer |
+| `create-a-small-plan/SKILL.md` | 1,824 | 1–3 questions, one criticizer round |
+
+</details>
+
+### Check the numbers yourself
+
+From the repository root. Both count the same thing — one from the working tree, one from the git objects —
+and both are byte counts as stored in git (`preset/**` is `-text`, so git never rewrites its line endings):
+
+```bash
+python -c "import pathlib;f=[p for p in pathlib.Path('preset/skills').rglob('*') if p.is_file()];print(len(f), sum(p.stat().st_size for p in f))"
+# 24 418546
+
+python -c "import subprocess;o=subprocess.run(['git','ls-tree','-r','HEAD','--long','preset/skills/'],capture_output=True,text=True).stdout.splitlines();r=[l.split() for l in o];print(len(r), sum(int(x[3]) for x in r))"
+# 24 418546
+```
+
+Swap `preset/skills/` for `preset/` and both give `36 539315`. No count above is asserted without a command
+that reproduces it.
+
+---
+
 ## §4.1 Before / After — the 3-second version
 
 **Before** — what an unconstrained agent does:
@@ -537,7 +615,7 @@ dsh-ml-planner/
 │  ├─ ANTI-HALLUCINATION.md     ← the 8 mechanisms with verbatim source quotes
 │  ├─ FILE-INDEX.md             ← one line per file
 │  └─ PRESET-README.original.md ← the preset's original README, preserved
-├─ preset/                      ← the preset itself (36 files, 534,561 B) — copy this to ~/.dsh/.agent-presets/ml-planner
+├─ preset/                      ← the preset itself (36 files, 539,315 B) — copy this to ~/.dsh/.agent-presets/ml-planner
 │  ├─ agent.cordis.yml  preset.yml  README.md
 │  ├─ router-planner-bootstrap.mjs  router-planner-core.mjs
 │  ├─ lib/                      ← ml-keywords.json (118 terms + 19 ambiguous), plan-subagents.js

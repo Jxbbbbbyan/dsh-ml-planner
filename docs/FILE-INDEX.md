@@ -1,7 +1,7 @@
 # FILE-INDEX — one line per file
 
 > **中文摘要**：本仓库每个文件与目录的**一句话用途**。全部数字（文件数、字节数）均为实测。
-> `preset/` 下 **36 个文件 / 534,561 B**；仓库总计 **49 个文件**（不含 `.git/`，含本文件为 50）。
+> `preset/` 下 **36 个文件 / 539,315 B**；仓库总计 **49 个文件**（不含 `.git/`，含本文件为 50）。
 
 Legend: **[R]** = repository-level file (not part of the installable preset) · **[P]** = ships inside `preset/`
 and is installed into `~/.dsh/.agent-presets/ml-planner`
@@ -12,9 +12,9 @@ and is installed into `~/.dsh/.agent-presets/ml-planner`
 
 | Path | Bytes | Purpose |
 |---|---|---|
-| `README.md` **[R]** | 50,159 | The front page: positioning, the four advantages, pipeline and gates, quick start, dependencies, self-check results, provenance. |
+| `README.md` **[R]** | 55,885 | The front page: what you are actually downloading (§4.0), positioning, the four advantages, pipeline and gates, quick start, dependencies, self-check results, provenance. |
 | `LICENSE` **[R]** | 1,084 | MIT license text. |
-| `CHANGELOG.md` **[R]** | 6,769 | Version history; `v0.1.0` is the first release. |
+| `CHANGELOG.md` **[R]** | 9,827 | Version history; `v0.1.0` is the first release. |
 | `.gitignore` **[R]** | 1,770 | Ignores `.state/`, `__pycache__/`, `node_modules/`, `*.log` — keeps run ledgers and caches out of the repository. |
 | `.gitattributes` **[R]** | 846 | Forces LF line endings, so a Windows checkout does not pollute the tree with CRLF diffs. |
 
@@ -42,7 +42,7 @@ and is installed into `~/.dsh/.agent-presets/ml-planner`
 | `scripts/verify.ps1` **[R]** | 12,085 | Runs all three validators against an installed preset or a checkout, prints **real exit codes**, auto-detects a usable Python (skipping the Microsoft Store stub) and forces UTF-8 for the child interpreter. |
 | `scripts/push-to-github.ps1` **[R]** | 14,200 | Creates the remote repository and pushes; reads `$env:GH_TOKEN` and prints instructions when no token is present. |
 
-## `preset/` — the installable preset (36 files, 534,561 B)
+## `preset/` — the installable preset (36 files, 539,315 B)
 
 ### Composition and metadata
 
@@ -119,7 +119,7 @@ and is installed into `~/.dsh/.agent-presets/ml-planner`
 
 ## Notes on this index
 
-**Counts.** `preset/` holds **36 files / 534,561 B**. The repository holds **49 files** excluding `.git/`
+**Counts.** `preset/` holds **36 files / 539,315 B**. The repository holds **49 files** excluding `.git/`
 (**50** including this file). The preset contained 40 files in the author's environment; **4 were deliberately
 excluded** from this repository — the three unrelated GUI / ChatGPT-sidebar skills, and the FEM-only
 `scripts/vtu_to_tensor.py`. See `README.md` §4.7 ("What this repository does not include").
