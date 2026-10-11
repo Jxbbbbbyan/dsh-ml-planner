@@ -94,6 +94,21 @@ function Resolve-PythonExe {
         }
     }
 
+    # An activated virtualenv names its own interpreter.
+    foreach ($virtualEnv in @($env:VIRTUAL_ENV)) {
+        if (-not [string]::IsNullOrWhiteSpace($virtualEnv)) {
+            $candidates.Add((Join-Path $virtualEnv 'python.exe'))
+            $candidates.Add((Join-Path $virtualEnv 'bin/python'))
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:CONDA_EXE)) {
+        # <prefix>\Scripts\conda.exe (or ...\condabin\conda.bat) -> <prefix>\python.exe
+        $condaRoot = Split-Path -Parent (Split-Path -Parent $env:CONDA_EXE)
+        if (-not [string]::IsNullOrWhiteSpace($condaRoot)) {
+            $candidates.Add((Join-Path $condaRoot 'python.exe'))
+        }
+    }
+
     # Conda / mamba style prefixes, derived from the environment and standard locations only.
     $prefixes = @(
         $env:CONDA_PREFIX,
