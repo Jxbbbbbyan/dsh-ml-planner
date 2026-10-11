@@ -207,7 +207,15 @@ L3 表的「generated files present: 29」计数因此**同样已陈旧**（现�
 
 | relative path | bytes（现在） | sha256 |
 |---|---|---|
-| `skills\ml-modeling-plan\references\ml-pipeline-and-invocation.md` | 60098 | `c14bdaa5b471b693b242b291d1b7b0560868a4eba49a86958ef41e24648b7f2a` |
+| `skills\ml-modeling-plan\references\ml-pipeline-and-invocation.md` | 60190 | `9ae6babe9704312032b81364460a11b04892b8b1285bf724bb5d0ac07366d311` |
+
+> **补充更正（同一次编辑性清理，收尾轮）**：该文件 §3.2 的「落地状态说明」原文写 `SKILL.md` 的 §3 路由表
+> **"当前尚未收录这两行"** —— 与事实不符。随仓库发布的 `skills\ml-modeling-plan\SKILL.md`
+> **L65 = `references/ml-pipeline-and-invocation.md`、L66 = `references/ml-discipline-rules.md`**，两行**已收录**。
+> 该句已改写为"**已收录（L65/L66）**，可由正常路由发现，无需显式路径引用"。
+> 同一轮的陈旧陈述也已在仓库根的 `README.md` Roadmap 与 `docs\ARCHITECTURE.md` §3.3 一并改正（全仓 grep 零残留）。
+> 该改写使本文件的字节数随之变化，故上表 L3 值由 **60098** / `c14bdaa5…`（清理中途值）更新为
+> **60190** / `9ae6babe9704312032b81364460a11b04892b8b1285bf724bb5d0ac07366d311`（清理终值）。
 
 > **L1 / L2 不受影响。** 该文件**不在 L1 表（17 行）内**，也不是纯拷贝行，因此指纹
 > `e17fc1907bc75db7e7992459afab4c67cec832f6fcf065c107f03917fa79db22` 与 L2 的 11 个纯拷贝逐字节比对**均不变**

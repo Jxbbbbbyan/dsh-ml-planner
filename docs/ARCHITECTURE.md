@@ -132,9 +132,10 @@ The entry skill loads **only what the task needs**. 14 reference files:
 | Checking this preset's own integrity | `preset-integrity-manifest.md` |
 | Changing the keyword trigger | `ml-keywords.md` |
 
-> **Landing note.** The pipeline file records that `SKILL.md`'s own §3 routing table does **not** yet list
-> `ml-pipeline-and-invocation.md` and `ml-discipline-rules.md`; until that row is added they can only be reached by
-> explicit path. Treat this as a known, documented gap rather than discovering it by surprise.
+> **Landing note.** `SKILL.md`'s own §3 routing table **does** list both files — line 65 is
+> `ml-pipeline-and-invocation.md` and line 66 is `ml-discipline-rules.md` (verified against the shipped
+> `preset/skills/ml-modeling-plan/SKILL.md`) — so both are reached through normal routing, and the table above
+> simply mirrors those two rows. No explicit-path workaround is required.
 
 ### 3.4 Stage → rule section
 

@@ -142,8 +142,9 @@ S0 立项与范围 → S1 数据与标签盘点 → S2 切分设计 → S3 特�
 | PLAN 工件骨架 | `skills/references/plan-artifact-template.md` |
 | 防腐化交接 | `skills/context-handoff/SKILL.md` |
 
-> **落地状态说明。** 上表包含本文件与文件 A 两行，但 `skills/ml-modeling-plan/SKILL.md` 的 §3 路由表**当前尚未收录这两行**
-> —— 需由主代理统一新增（本文件不自行修改 SKILL.md）。在本轮交付完成前，这两份 reference 只能被**显式路径**引用。
+> **落地状态说明。** 上表包含本文件与文件 A 两行，且 `skills/ml-modeling-plan/SKILL.md` 的 §3 路由表**已收录这两行**
+> （L65 = 本文件 `references/ml-pipeline-and-invocation.md`，L66 = `references/ml-discipline-rules.md`，已核对随仓库发布的 `SKILL.md`）。
+> 二者可由**正常路由**发现，无需显式路径引用。上表即为该路由表的对应行。
 
 ### 3.3 阶段 → 规则段映射表（S0~S10 × P0~P10）
 
