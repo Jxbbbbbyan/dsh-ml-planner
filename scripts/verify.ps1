@@ -280,18 +280,34 @@ or point at a checkout:
     Write-Host ('=' * 72)
     Write-Host 'summary'
     Write-Host ('=' * 72)
+
+    # The "portable mode" label must describe the verifier that is actually present in the target
+    # preset, not the arguments we passed: a preset installed from an older source still ships the
+    # pre-portable verify_integrity.py, which hard-codes an upstream baseline path.
+    $legacyVerifier = -not (Select-String -LiteralPath $integrity -Pattern 'no upstream baseline' -Quiet)
+
     Write-Host ('{0,-24} {1,6}   {2}' -f 'validator', 'exit', 'result')
     foreach ($r in $results) {
         $verdict = if ($r.Exit -eq 0) { 'PASS' } else { 'FAIL' }
         $detail = ''
         if ($r.Name -eq 'selftest.mjs') { $detail = " ($passCount PASS / $failCount FAIL)" }
         if ($r.Name -eq 'verify_integrity.py') {
-            $detail = if ([string]::IsNullOrWhiteSpace($BasePreset)) { ' (portable mode, L1 not applicable)' } else { ' (L1 baseline supplied)' }
+            $detail = if (-not [string]::IsNullOrWhiteSpace($BasePreset)) { ' (L1 baseline supplied)' }
+                      elseif ($legacyVerifier) { ' (legacy verifier in this preset)' }
+                      else { ' (portable mode, L1 not applicable)' }
         }
         Write-Host ('{0,-24} {1,6}   {2}{3}' -f $r.Name, $r.Exit, $verdict, $detail)
     }
 
-    if ([string]::IsNullOrWhiteSpace($BasePreset)) {
+    if ($legacyVerifier) {
+        Write-Host ''
+        Write-Host '  note: the verify_integrity.py in this preset is the legacy version. It hard-codes the'
+        Write-Host '        upstream baseline path, so it fails whenever that upstream preset is missing or'
+        Write-Host '        has moved on. Install the preset from this repository to get the portable'
+        Write-Host '        verifier (which reports SKIP instead of failing when no baseline is shipped):'
+        Write-Host '            pwsh -File scripts/install.ps1 -Force'
+    }
+    elseif ([string]::IsNullOrWhiteSpace($BasePreset)) {
         Write-Host ''
         Write-Host '  tip: the upstream preset is not part of this repository, so the L1 baseline'
         Write-Host '       comparison was skipped. If you also have the upstream preset installed:'
