@@ -30,7 +30,10 @@ First published release. / 首次发布。
   directory. An existing installation is never overwritten unless `-Force` / `--force` is given,
   and a forced upgrade keeps a timestamped backup first.
 - **`scripts/verify.ps1`** — runs the three bundled validators and prints each one's real exit
-  code: `validate_preset.py`, `selftest.mjs`, `verify_integrity.py`.
+  code: `validate_preset.py`, `selftest.mjs`, `verify_integrity.py`. It verifies the installed copy
+  by default, states on every run which copy it is testing, and falls back to the repository's own
+  `preset/` directory when nothing is installed — so a fresh clone can be verified before
+  installing (and it reports a non-zero exit code only when a validator really fails).
 - **`scripts/push-to-github.ps1`** — creates the GitHub repository when a token is available,
   sets the topics, and pushes the branch plus tags. Without a token it still attempts a plain
   `git push` (Git Credential Manager usually holds the credential), and on failure prints the
@@ -43,8 +46,8 @@ First published release. / 首次发布。
 
 ### Changed
 
-- **`preset/scripts/verify_integrity.py`** — the only preset file that deliberately differs from
-  the upstream original, in three ways, all of them required for the repository to be usable
+- **`preset/scripts/verify_integrity.py`** — one of the two preset files that deliberately differ
+  from the upstream original, in three ways, all of them required for the repository to be usable
   after a fresh clone:
   1. the two hard-coded personal absolute paths (`--preset`, `--source` defaults) were replaced by
      auto-location: `--preset` now defaults to the preset directory that contains this script's
@@ -60,6 +63,25 @@ First published release. / 首次发布。
      `errors="replace"` and the remaining non-ASCII literals were made ASCII.
   The L1 file/label matching was also made path-keyed instead of positional, so it compares the
   files the manifest actually names instead of whichever file happens to sort into the same slot.
+
+- **`preset/skills/ml-modeling-plan/references/ml-pipeline-and-invocation.md`** — the second
+  deliberate deviation, an **editorial cleanup** applied for publication. The file is not in the
+  integrity manifest's L1 table and is not a `pure-copy` row, so no guarded byte changes:
+  1. five author-machine absolute paths (`C:\Users\...`, `D:\miniconda3\...`) were replaced by
+     placeholders (`<USERPROFILE>\...`) or environment-independent wording. Two of them documented
+     `verify_integrity.py`'s *old* hard-coded defaults, which the fix above made obsolete, so
+     leaving them in place would have been actively wrong.
+  2. `scripts/vtu_to_tensor.py` belongs to the finite-element preset `fem-ml-planner` and is not
+     shipped here. The document now says so at every mention (pipeline-figure note, §4 preamble,
+     §4.5 heading, §6.1 and §8) instead of telling the reader that both presets share one script
+     set — a reader no longer goes looking for a file that does not exist.
+  3. the self-test count was stated as 46 in three places; the measured value is **45**
+     (45 PASS / 0 FAIL), so all three now read 45.
+- **`preset/skills/ml-modeling-plan/references/preset-integrity-manifest.md`** — a new
+  append-only addendum records the cleaned file's current bytes and sha256
+  (60,098 B / `c14bdaa5b471b693b242b291d1b7b0560868a4eba49a86958ef41e24648b7f2a`) and states that L1
+  and L2 are unaffected. The generator-time L3 table and the earlier addenda are left untouched, per
+  the file's own append-only discipline.
 
 ### Not included
 
@@ -90,8 +112,8 @@ Measured on the release commit, all from a fresh `git clone` into a temporary di
 - Manifest fingerprint: `e17fc1907bc75db7e7992459afab4c67cec832f6fcf065c107f03917fa79db22`
   (recomputed from the manifest's own rows; this is a snapshot for v0.1.0, the manifest stays the
   single source of truth).
-- `preset/` is byte-identical to the upstream preset for 35 of its 36 files; the exception is
-  `verify_integrity.py` listed under **Changed** above.
+- `preset/` is byte-identical to the upstream preset for **34 of its 36 files**; the two
+  deliberate exceptions are both listed under **Changed** above.
 - No npm dependencies: the preset ships no `package.json`, so the Node modules run on a bare
   Node.js install. Python side is standard library only (`validate_preset.py` additionally uses
   `PyYAML` when present and skips the composition check when it is not).

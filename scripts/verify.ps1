@@ -210,11 +210,42 @@ function Invoke-Validator {
 
 try {
     $repoRoot = Split-Path -Parent $PSScriptRoot
+
+    # Which copy are we about to verify? -Preset wins; otherwise the installed copy is preferred,
+    # and when nothing is installed there we fall back to the repository's own preset/ directory so
+    # that a fresh clone can be verified without installing anything first.
+    $presetSource = 'explicit -Preset'
+    $fellBack = $false
+    if (-not $PSBoundParameters.ContainsKey('Preset')) {
+        $isPreset = {
+            param($path)
+            (Test-Path -LiteralPath $path -PathType Container) -and
+            (Test-Path -LiteralPath (Join-Path $path 'agent.cordis.yml') -PathType Leaf)
+        }
+        if (& $isPreset $Preset) {
+            $presetSource = 'installed copy (default location)'
+        }
+        else {
+            $repoPreset = Join-Path $repoRoot 'preset'
+            if (& $isPreset $repoPreset) {
+                $fellBack = $true
+                $Preset = $repoPreset
+                $presetSource = 'repository copy (nothing installed at the default location)'
+            }
+        }
+    }
     $Preset = [System.IO.Path]::GetFullPath($Preset)
 
     Write-Host 'dsh-ml-planner - self-check'
     Write-Host "  preset : $Preset"
+    Write-Host "  copy   : $presetSource"
     Write-Host "  repo   : $repoRoot"
+    if ($fellBack) {
+        Write-Host ''
+        Write-Host '  note: nothing is installed at the default location, so this run verifies the'
+        Write-Host "        repository's own preset/ copy ($Preset)."
+        Write-Host '        Install it with:  pwsh -File scripts/install.ps1'
+    }
 
     if (-not (Test-Path -LiteralPath $Preset -PathType Container)) {
         throw @"
@@ -280,6 +311,9 @@ or point at a checkout:
     Write-Host ('=' * 72)
     Write-Host 'summary'
     Write-Host ('=' * 72)
+    Write-Host "preset under test: $Preset"
+    Write-Host "                   [$presetSource]"
+    Write-Host ''
 
     # The "portable mode" label must describe the verifier that is actually present in the target
     # preset, not the arguments we passed: a preset installed from an older source still ships the

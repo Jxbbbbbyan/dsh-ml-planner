@@ -78,6 +78,10 @@ S0 立项与范围 → S1 数据与标签盘点 → S2 切分设计 → S3 特�
                                               └──（S10 回滚：回退到上一版通过门禁的出口物）
 ```
 
+> **本仓库范围**：图中 `fem 模式追加段` 的两个环节（`ElmerSolver`、`vtu_to_tensor.py`）属有限元规划模式
+> `fem-ml-planner`，**本仓库不包含**；本仓库只发布 ML 规划部分，所以 §4.5 对 `vtu_to_tensor.py` 只是说明，
+> 不是一个随仓库发布的脚本。
+
 **出口物命名约定（本节提议，非既有工件）。** 已有工件是 `ML_BRIEF.md` / `PLAN_vN.md` / `DECISIONS.md` 与
 `dsh-plans/.state/runs/<run-id>/{run.json,decisions.jsonl,subagents.jsonl,refs.jsonl}`。
 本节额外用 `dsh-plans/<slug>/evidence/<阶段码>-<名称>.{md,json,png}` 存放数字与图（Verifier Checklist 的 evidence 字段指它）。
@@ -202,9 +206,9 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 
 ## 4. 插件与脚本调用逻辑
 
-**说明**：以下路径按 `C:\Users\Admin\.dsh\.agent-presets\ml-planner\` 为根，均已逐个 `Test-Path` 实测存在（见文件末核对表）。
+**说明**：以下路径按 **预设根目录**（安装后为 `<USERPROFILE>\.dsh\.agent-presets\ml-planner\`，本仓库里就是 `preset/`）为根，撰写时已逐个 `Test-Path` 实测存在。
 规格书 §1 文件 B 的候选清单中列出的项**全部存在且名称一致**；候选清单外另有 `scripts/validate_preset.py` 真实存在，一并收录。
-两个预设（ml-planner / fem-ml-planner）**共享同一套脚本**，差异在技能层而非脚本层 —— 包括 `vtu_to_tensor.py` 在两边的都存在。
+上游把 ml-planner / fem-ml-planner 做成**共享同一套脚本**、差异在技能层而非脚本层；**本仓库只发布 ML 规划部分**，因此下表只列本仓库实际包含的脚本，FEM 专用脚本 `vtu_to_tensor.py`（见 §4.5）**不包含在本仓库内**。
 
 ### 4.1 `scripts/dsh_plans_state.py`（plan 状态读写）
 
@@ -223,9 +227,9 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 |---|---|
 | **用途** | 三级完整性校验：预设是否还是它自称的那个预设。以 `skills/ml-modeling-plan/references/preset-integrity-manifest.md` 为**唯一真源**（哈希不在代码里重复） |
 | **何时调用** | 任何改动**预设自身文件**之后（本轮新增 reference 之后即应跑一次）；交付前的自证；怀疑某文件被误改时 |
-| **输入** | `--preset`（默认 `C:\Users\Admin\.dsh\.agent-presets\ml-planner`）、`--source`（默认 `…\router-planner`）、`--verbose`。**默认值是本机绝对路径**，换机器必须显式传参 |
+| **输入** | `--preset`（默认 = 本脚本所在目录的上一级，即预设根）、`--source`（默认空 = 跳过 L1 基线比对；显式传入上游预设目录才启用）、`--strict`（缺上游基线时报错而非 SKIP）、`--verbose`。**不硬编码任何个人路径**，克隆后不带参数即可运行 |
 | **输出** | 只读诊断到 stdout：L1 源基线（文件数 + 逐文件 sha256 + 指纹）、L2 纯拷贝逐字节一致数、L2' 有意编辑项的结构守卫（**仅报告不强制**）、L3 生成文件计数。**不写任何文件** |
-| **失败怎么办** | 退出码 0 = L1+L2 通过；1 = 有 FAILURES（逐条列出）；2 = FATAL（清单缺失 / 源预设缺失 / 清单零行）。修复方向是**回退被改动的纯拷贝文件**，不是改清单——清单的 L3 表按设计是生成时快照。⚠ 本机会话里裸 `python` **不可解析**（WindowsApps 桩，exit 9009），必须用显式解释器（如 `D:\miniconda3\python.exe`）调用 |
+| **失败怎么办** | 退出码 0 = 全部**适用**层通过（不适用层打印 `SKIP` 并**不计入**退出码，也绝不报成 PASS）；1 = 有 FAILURES（逐条列出）；2 = FATAL（清单缺失 / `--strict` 但未提供上游基线 / 清单零行）。修复方向是**回退被改动的纯拷贝文件**，不是改清单——清单的 L3 表按设计是生成时快照。⚠ PATH 上的 `python` 可能是 WindowsApps 桩（不可解析），此时用真实解释器调用：`scripts/verify.ps1` 会自动跳过该桩，也可显式传 `-Python <解释器路径>` |
 | **不要用它做什么** | **不要**把它当"新文件合法性检查"：它只校验清单里列出的文件，**本轮新增的 reference 不在清单里，因此不影响 L1/L2**（实测 RESULT: PASS）。不要手改清单里的 L1/L2 行来"让校验通过"；不要指望它校验关键词表（那是 §4.3 的三方漂移断言），也不要指望它校验 `scripts/fixtures/` 的语料（见 §4.6） |
 
 **实测记录（本节能被独立复现）**：`L1 files=17 hash-mismatches=0`、`fingerprint OK (e17fc1907bc75db7…)`、
@@ -240,7 +244,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 | **输入** | 无参数；用真实 Node 模块加载本预设的两个本地模块与 `lib/plan-subagents.js` |
 | **输出** | 6 个 section 的 `PASS` / `FAIL` 行 + 末尾 OK 行；退出码 0 = 全通过，否则 1 |
 | **失败怎么办** | 任一 `FAIL` 都指向它相邻的修复点（分类、引导注入点、工具面裁剪、deny 列表）；修完重跑。若因 `_comment` 与代码不符而怀疑，**以脚本实际输出为准** |
-| **不要用它做什么** | 不要把它当完整性校验（它不读清单，§4.2 才做）；不要把它当 ML 纪律检查（它只验路由与插件装配）；不要用它的通过代替 §3.5 的 Checklist。⚠ 各处对"多少项检查"的记述已陈旧：`agent.cordis.yml` 注释写 38、`README.md` 写 40、**实测 46 PASS / 0 FAIL**，以实测为准 |
+| **不要用它做什么** | 不要把它当完整性校验（它不读清单，§4.2 才做）；不要把它当 ML 纪律检查（它只验路由与插件装配）；不要用它的通过代替 §3.5 的 Checklist。⚠ 各处对"多少项检查"的记述已陈旧：`agent.cordis.yml` 注释写 38、旧 `README.md` 写 40、本文件旧版写 46；**实测 45 PASS / 0 FAIL**，以实测为准 |
 
 ### 4.4 `scripts/validate_preset.py`（原作者结构校验；候选清单外但实际存在）
 
@@ -253,7 +257,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 | **失败怎么办** | 报"缺某个 `SKILL.md` / 某份共享 reference"时，按提示补文件或改组合；它是**结构**校验，不判断内容质量 |
 | **不要用它做什么** | 不要当关键词校验器 —— `scripts/fixtures/ml-band-cases.json` 的 `_comment` 声称"read by … the keyword validator"，但**磁盘上不存在关键词校验器**：`validate_preset.py` 只做结构校验，`ml-band-cases.json` 也不被任何脚本读取（见 §4.6）。不要用它校验哈希（那是 §4.2） |
 
-### 4.5 `scripts/vtu_to_tensor.py`（**FEM 专用**：求解器 VTU → 栅格张量）
+### 4.5 `scripts/vtu_to_tensor.py`（**FEM 专用，属 `fem-ml-planner`，本仓库不包含**：求解器 VTU → 栅格张量）
 
 | 字段 | 内容 |
 |---|---|
@@ -261,7 +265,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 | **何时调用** | fem 模式 S1 的第一动作，在"数据与标签盘点"之前；每次换网格、换分辨率、换 `.sif` 后**必须重跑**（网格即标签） |
 | **输入** | `--vtu`（必填）、`--out`（必填 `.npz`）、`--field-kind {axial,polar}`（**必填**）、`--meta-out`、`--nx`（默认 256）、`--ny`（默认 320）、`--field`、`--direction`、`--keep-boundary-cells`、`--sif` |
 | **输出** | `.npz`（`image` / `mask` / 可选 `field` = cos/sin 对 + magnitude、`cat_*` 类别数组）+ `.json` 元数据，含 `grid` / `bbox` / `cell_type_counts` / `boundary_cells_stripped` / `true_nodal_max` / `raster_max` / **`raster_peak_retention`** / `mask_coverage` / `dropped_dead_components` / `categorical_arrays` / `direction.{field_kind,channels,double_angle_mean_deg,double_angle_resultant_R}` / `provenance`；stdout 打印网格、包围盒、掩膜覆盖率、峰值保持率 |
-| **失败怎么办** | **必须在带 `vtk` 的解释器里跑**（预设文档给的是 `D:\miniconda3\envs\dsh-elmer\python.exe`）；缺 `vtk` 立即失败——此时**不要**改脚本去 `import torch` 绕过，改成换解释器。`--field-kind` 是必填项，漏传即报错，因为脚本无法替你判断轴向/极向；这一步要按 §6 判定后显式传入。若某数组名不存在，运行时按实际名查（向量变量到达时是**小写**） |
+| **失败怎么办** | **必须在带 `vtk` 的解释器里跑**（一个装好 `vtk` 的独立解释器；本仓库不附任何具体解释器路径）；缺 `vtk` 立即失败——此时**不要**改脚本去 `import torch` 绕过，改成换解释器。`--field-kind` 是必填项，漏传即报错，因为脚本无法替你判断轴向/极向；这一步要按 §6 判定后显式传入。若某数组名不存在，运行时按实际名查（向量变量到达时是**小写**） |
 | **不要用它做什么** | 不要在训练解释器里跑它（该环境没有 `vtk`）；不要在转换脚本里 `import torch`（`.npz` 是**唯一**跨环境接口，两解释器职责必须分开）；不要用它替代网格上的计算 —— 极值、位置、间断、方向、网格属性（单元尺寸/连通性/质量/缺陷类别）必须在网格上算，栅格只能作辅助输入；不要把 `raster_peak_retention` 当作可省略的装饰字段 |
 
 ### 4.6 `scripts/fixtures/ml-band-cases.json`（分带夹具；**离线证据，未接线**）
@@ -346,7 +350,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 | **用途** | `preset.yml`（选择器显示名与简介，**模式判定的第一手依据**：`机器学习规划模式 (ML Planner)` vs `有限元机器学习规划模式 (FEM ML Planner)`）、`README.md`（安装、兼容补丁表、自检命令与已知宿主时序）、`skills/references/{dsh-planning-workflow,state-and-config,plan-artifact-template}.md`（工作流、状态、PLAN 骨架） |
 | **何时调用** | 会话开局（读 `preset.yml`/`README.md` 确认模式）与规划启动（读工作流参考与 PLAN 骨架） |
 | **输入 / 输出** | 只读；`README.md` 的"已知行为"节解释了首轮 assembly 的宿主时序 |
-| **失败怎么办** | README 中的计数与注释可能陈旧（已实测：自检项 40/38 两说，真值 46）；冲突时以**实测**为准并在第 7 栏记录 |
+| **失败怎么办** | README 中的计数与注释可能陈旧（已实测：自检项 40/38/46 三说，真值 **45**）；冲突时以**实测**为准并在第 7 栏记录 |
 | **不要用它做什么** | 不要改 `preset.yml` / `README.md`（均在 L1 表的 `intentional-edit` 分类下，改动会改变指纹并触发 L1 FAIL） |
 
 ---
@@ -364,7 +368,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 | **极端值处理** | 可直接在样本上取极值，或作为目标回归 | 极值 / 位置 / 间断 / 方向 / 网格属性**必须在网格上算**；栅格只作辅助输入 | 栅格化保留峰值仅 17.4 %–30.4 %（随分辨率变化），取栅格极值等于系统性低估真极值；分辨率越高保留越多，模型可能学到网格而非物理 |
 | **验证方式** | 交叉验证 + 独立测试集；按组长 | 同上，**并且**标签敏感性实验（阈值/边界扰动后结论是否翻转）+ 跨物理量一致性验证 | 离散化设定的边界是人为的：边界一移标签就变，若结论随边界翻转，那它不是结果；跨物理量的一致不是 ground truth，只能叫一致性验证 |
 | **上线口径** | 复用训练时预处理器参数；声明适用工况 | 同上，**并且**声明适用工况范围 + 随样本携带网格分辨率与求解器溯源 | 换网格/换分辨率/换求解器即换真值域，模型在训练网格上学到的可能正是那个网格；上线时必须能说明"输入来自哪次离散化" |
-| **解释器与运行环境** | 一个环境（训练栈） | **两个环境**：`vtk` 在 VTK 解释器（实测路径 `D:\miniconda3\envs\dsh-elmer\python.exe`），训练栈在 ML 解释器 | 两边都不装对方的库，一个脚本同时需要两者必然失败；职责必须按环境切开 |
+| **解释器与运行环境** | 一个环境（训练栈） | **两个环境**：`vtk` 在 VTK 解释器（一个装好 `vtk` 的独立解释器），训练栈在 ML 解释器 | 两边都不装对方的库，一个脚本同时需要两者必然失败；职责必须按环境切开 |
 | **环境间接口** | — | `.npz` + 元数据 `.json` 是**唯一**接口；转换脚本不 `import torch` | 进程内共享对象在跨环境时不存在；文件是唯一能同时满足两个解释器的载体 |
 | **离散化不确定性** | 一般不作为样本字段（除非标注误差已知） | 每个样本携带 `raster_peak_retention` 与 `mask_coverage`，异常/缺失记入第 7 栏 | 不确定性是随样本变化的，只报一个总体误差会让高分辨率样本与低分辨率样本混为一谈 |
 | **溯源字段** | 数据版本、抽样时间 | 追加 `.sif` 名、`.vtu` sha256、求解器版本、网格分辨率、被丢弃的死分量、被剥离的边界单元 | "名值纪律"要求：仿真量不是 ground truth，样本没有溯源就无法判断两个样本是否可比（语料：相隔数月、设置不同的样本静默不可比） |
@@ -380,7 +384,7 @@ S 码 = 本文件的**执行阶段**；P 码 = `ml-discipline-rules.md` 的**规
 ### 6.1 标签即网格：离散化即标签定义
 
 - **机理**：求解器输出是离散化的函数。网格一改，节点值、梯度、阈值穿越位置全变，所以**改变网格改变真值本身**，不是"同真值的更精确观测"。
-- **落地**：`vtu_to_tensor.py` 的元数据里 `grid` / `bbox` / `points` / `cells` / `cell_type_counts` 随样本落盘；每个样本携带离散化不确定性代理；把这三件事写进 `ML_BRIEF.md` 第 2 项与第 7 栏。
+- **落地**：`vtu_to_tensor.py`（属 `fem-ml-planner`，**本仓库不包含**）的元数据里 `grid` / `bbox` / `points` / `cells` / `cell_type_counts` 随样本落盘；每个样本携带离散化不确定性代理；把这三件事写进 `ML_BRIEF.md` 第 2 项与第 7 栏。
 - **判定**：任取两个样本，能说出它们各自的网格分辨率与来源 `.vtu` sha256；若要做收敛性声明，必须给出跨至少两档网格的对照。
 - **失败模式**：把不同分辨率的样本混成一个训练集而不作分组或加权 ⇒ 模型学到分辨率与标签的相关性，指标不可比。
 
@@ -484,6 +488,6 @@ S0 写 ML_BRIEF.md 六项  →  S1~S3 把数据/切分/预处理决策写进契�
 
 1. **不声称规则内容。** 本文件不重复 `ml-discipline-rules.md` 的规则正文，也不判定某条规则的强度或类别；引用只到**阶段段**（P0~P10），不到规则号。两文件若在措辞上冲突，规则以文件 A 为准，调用顺序以本文件为准。
 2. **不声称管线是唯一正确的建模流程。** S0~S10 是本预设强制的**纪律顺序**（先契约、先基线、测试集只用一次），不是性能最优流程；它约束的是"不许跳过什么"，不是"必须按某个顺序调参"。
-3. **不声称已实测全部脚本的行为。** 本文件的路径核对、`verify_integrity.py` 的 PASS 结果、`selftest.mjs` 的 46 项通过、`vtu_to_tensor.py` 的字段清单均在本机实测；但 **`vtu_to_tensor.py` 未在本轮对真实 `.vtu` 重跑**（其设计意图与字段来自脚本源码与既有文档），且 §6 的数值（17.4 %–30.4 % 峰值保持、49.6 %–51.3 % 空体素、90.0000°/R=0.9848、重复对象误差 0.2 vs 0.0）是**语料中的实测值**，应按"警示量级"使用，不得当作你自己数据的常数。
+3. **不声称已实测全部脚本的行为。** 本文件的路径核对、`verify_integrity.py` 的 PASS 结果、`selftest.mjs` 的 **45 项**（实测）通过均在本机实测；而 `vtu_to_tensor.py`（属 `fem-ml-planner`，**本仓库不包含**）的字段清单来自其脚本源码与既有文档，**未在本轮对真实 `.vtu` 重跑**，且 §6 的数值（17.4 %–30.4 % 峰值保持、49.6 %–51.3 % 空体素、90.0000°/R=0.9848、重复对象误差 0.2 vs 0.0）是**语料中的实测值**，应按"警示量级"使用，不得当作你自己数据的常数。
 4. **不声称 `scripts/fixtures/ml-band-cases.json` 的断言仍在被自动检查。** 实测它不被任何脚本读取（§4.6）；它在文档里被描述为"read by scripts/selftest.mjs and by the keyword validator"，但磁盘上既无该接线也无该校验器。
 5. **不声称本文件的 9 条 fem-extra 是全部 fem 知识。** 求解器操作层（Elmer 安装、Gmsh→Elmer 网格转换、`.sif` 校验、异步求解）与网格缺陷诊断属于相邻技能（`elmer-fem`、`mesh-quality`），不在本文件范围。
